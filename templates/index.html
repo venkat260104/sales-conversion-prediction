@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Score a website session and review its likelihood to convert."
+    />
+    <title>{{ title }} · Northstar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}" />
+  </head>
+  <body>
+    {% set field_labels = {
+      'Administrative': 'Administrative pages',
+      'Administrative_Duration': 'Time on administrative pages',
+      'Informational': 'Informational pages',
+      'Informational_Duration': 'Time on informational pages',
+      'ProductRelated': 'Product pages',
+      'ProductRelated_Duration': 'Time on product pages',
+      'SpecialDay': 'Special-day proximity',
+      'Month': 'Visit month',
+      'OperatingSystems': 'Operating system',
+      'Browser': 'Browser',
+      'Region': 'Visitor region',
+      'TrafficType': 'Traffic source type',
+      'VisitorType': 'Visitor type',
+      'Weekend': 'Weekend visit'
+    } %}
+    {% set field_help = {
+      'Administrative': 'Number of administrative pages viewed',
+      'Administrative_Duration': 'Time spent in this section, in seconds',
+      'Informational': 'Number of informational pages viewed',
+      'Informational_Duration': 'Time spent in this section, in seconds',
+      'ProductRelated': 'Number of product pages viewed',
+      'ProductRelated_Duration': 'Time spent in this section, in seconds',
+      'SpecialDay': 'How close the visit is to a special day (0–1)',
+      'Month': 'Month when the session took place',
+      'OperatingSystems': 'Dataset category for the visitor’s OS',
+      'Browser': 'Dataset category for the visitor’s browser',
+      'Region': 'Dataset category for the visitor’s region',
+      'TrafficType': 'Dataset category for the traffic source',
+      'VisitorType': 'Returning, new, or other visitor',
+      'Weekend': 'Whether the session took place on a weekend'
+    } %}
+
+    <div class="app-shell">
+      <aside class="sidebar">
+        <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Northstar home">
+          <span class="brand-mark" aria-hidden="true">N</span>
+          <span class="brand-name">northstar<span>.</span></span>
+        </a>
+
+        <div class="workspace-label">WORKSPACE</div>
+        <nav class="side-nav" aria-label="Main navigation">
+          <a class="nav-link active" href="#overview">
+            <span class="nav-icon grid-icon" aria-hidden="true"></span>
+            Overview
+          </a>
+          <a class="nav-link" href="#prediction">
+            <span class="nav-icon pulse-icon" aria-hidden="true"></span>
+            Session scoring
+          </a>
+          <a class="nav-link" href="#model-details">
+            <span class="nav-icon circle-icon" aria-hidden="true"></span>
+            Model details
+          </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+          <div class="model-status">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <strong>Prediction model</strong>
+              <span>Online and ready</span>
+            </div>
+          </div>
+          <div class="profile">
+            <div class="avatar" aria-hidden="true">SC</div>
+            <div class="profile-copy">
+              <strong>Sales team</strong>
+              <span>Conversion workspace</span>
+            </div>
+            <span class="profile-menu" aria-hidden="true">···</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content" id="overview">
+        <header class="topbar">
+          <div class="breadcrumbs">
+            <span>Workspace</span>
+            <span class="breadcrumb-divider">/</span>
+            <strong>Session scoring</strong>
+          </div>
+          <div class="topbar-actions">
+            <span class="live-indicator"><span></span> Model active</span>
+            <div class="topbar-avatar" aria-label="Sales team">SC</div>
+          </div>
+        </header>
+
+        <div class="page-content">
+          <section class="page-heading">
+            <div>
+              <p class="eyebrow">CONVERSION INTELLIGENCE</p>
+              <h1>Know which visits are ready to convert.</h1>
+              <p class="page-description">
+                Score a website session using visitor behavior and context. Get a
+                clear likelihood estimate to help prioritize your next action.
+              </p>
+            </div>
+            <div class="heading-date">
+              <span class="calendar-icon" aria-hidden="true"></span>
+              <span>Session analysis</span>
+            </div>
+          </section>
+
+          <section class="summary-grid" aria-label="Model summary">
+            <article class="summary-card">
+              <div class="summary-icon indigo" aria-hidden="true">%</div>
+              <div>
+                <p>Conversion threshold</p>
+                <strong>{{ (threshold * 100) | round(0) | int }}%</strong>
+              </div>
+              <span class="summary-note">Decision boundary</span>
+            </article>
+            <article class="summary-card">
+              <div class="summary-icon mint" aria-hidden="true">#</div>
+              <div>
+                <p>Session signals</p>
+                <strong>{{ features | length }}</strong>
+              </div>
+              <span class="summary-note">Inputs used by the model</span>
+            </article>
+            <article class="summary-card">
+              <div class="summary-icon amber" aria-hidden="true">↗</div>
+              <div>
+                <p>Scoring status</p>
+                <strong class="ready-value">Ready</strong>
+              </div>
+              <span class="summary-note">Prediction available</span>
+            </article>
+          </section>
+
+          <section class="work-grid" id="prediction">
+            <div class="form-card">
+              <div class="section-heading">
+                <div>
+                  <p class="eyebrow">NEW ANALYSIS</p>
+                  <h2>Session details</h2>
+                  <p>Enter the visitor’s activity to generate a conversion score.</p>
+                </div>
+                <span class="step-badge">01 <span>/ 01</span></span>
+              </div>
+
+              <form
+                method="post"
+                action="{{ url_for('dashboard_submit') }}"
+                class="prediction-form"
+              >
+                <fieldset class="input-section">
+                  <legend>
+                    <span class="section-number">01</span>
+                    Browsing activity
+                  </legend>
+                  <p class="fieldset-description">
+                    Page views and time spent across the website.
+                  </p>
+                  <div class="field-grid">
+                    {% for feature in features %}
+                      {% if feature in [
+                        'Administrative',
+                        'Administrative_Duration',
+                        'Informational',
+                        'Informational_Duration',
+                        'ProductRelated',
+                        'ProductRelated_Duration'
+                      ] %}
+                        <div class="field-group">
+                          <label for="{{ feature }}">{{ field_labels[feature] }}</label>
+                          <input
+                            id="{{ feature }}"
+                            name="{{ feature }}"
+                            type="number"
+                            min="0"
+                            step="{% if 'Duration' in feature %}any{% else %}1{% endif %}"
+                            value="{{ selected_values.get(feature, 0) }}"
+                            aria-describedby="{{ feature }}-help"
+                            required
+                          />
+                          <small id="{{ feature }}-help">{{ field_help[feature] }}</small>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </fieldset>
+
+                <fieldset class="input-section">
+                  <legend>
+                    <span class="section-number">02</span>
+                    Visit context
+                  </legend>
+                  <p class="fieldset-description">
+                    Timing and visitor relationship to your business.
+                  </p>
+                  <div class="field-grid">
+                    {% for feature in features %}
+                      {% if feature in ['SpecialDay', 'Month', 'VisitorType', 'Weekend'] %}
+                        <div class="field-group">
+                          <label for="{{ feature }}">{{ field_labels[feature] }}</label>
+                          {% if feature == 'Month' %}
+                            <select
+                              id="{{ feature }}"
+                              name="{{ feature }}"
+                              aria-describedby="{{ feature }}-help"
+                            >
+                              {% for month in months %}
+                                <option
+                                  value="{{ month }}"
+                                  {% if selected_values.get(feature) == month %}selected{% endif %}
+                                >{{ month }}</option>
+                              {% endfor %}
+                            </select>
+                          {% elif feature == 'VisitorType' %}
+                            <select
+                              id="{{ feature }}"
+                              name="{{ feature }}"
+                              aria-describedby="{{ feature }}-help"
+                            >
+                              {% for visitor_type in visitor_types %}
+                                <option
+                                  value="{{ visitor_type }}"
+                                  {% if selected_values.get(feature) == visitor_type %}selected{% endif %}
+                                >{{ visitor_type | replace('_', ' ') }}</option>
+                              {% endfor %}
+                            </select>
+                          {% elif feature == 'Weekend' %}
+                            <select
+                              id="{{ feature }}"
+                              name="{{ feature }}"
+                              aria-describedby="{{ feature }}-help"
+                            >
+                              <option
+                                value="1"
+                                {% if selected_values.get(feature) in ['1', 'True', 'true', 1, True] %}selected{% endif %}
+                              >Yes</option>
+                              <option
+                                value="0"
+                                {% if selected_values.get(feature) in ['0', 'False', 'false', 0, False] %}selected{% endif %}
+                              >No</option>
+                            </select>
+                          {% else %}
+                            <input
+                              id="{{ feature }}"
+                              name="{{ feature }}"
+                              type="number"
+                              min="0"
+                              max="1"
+                              step="0.01"
+                              value="{{ selected_values.get(feature, 0) }}"
+                              aria-describedby="{{ feature }}-help"
+                              required
+                            />
+                          {% endif %}
+                          <small id="{{ feature }}-help">{{ field_help[feature] }}</small>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </fieldset>
+
+                <fieldset class="input-section">
+                  <legend>
+                    <span class="section-number">03</span>
+                    Technical signals
+                  </legend>
+                  <p class="fieldset-description">
+                    Platform and acquisition categories for this session.
+                  </p>
+                  <div class="field-grid">
+                    {% for feature in features %}
+                      {% if feature in ['OperatingSystems', 'Browser', 'Region', 'TrafficType'] %}
+                        <div class="field-group">
+                          <label for="{{ feature }}">{{ field_labels[feature] }}</label>
+                          <input
+                            id="{{ feature }}"
+                            name="{{ feature }}"
+                            type="number"
+                            min="1"
+                            step="1"
+                            value="{{ selected_values.get(feature, 1) }}"
+                            aria-describedby="{{ feature }}-help"
+                            required
+                          />
+                          <small id="{{ feature }}-help">{{ field_help[feature] }}</small>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </fieldset>
+
+                <div class="form-footer">
+                  <p><span class="lock-icon" aria-hidden="true"></span> Session data is used only for this prediction.</p>
+                  <button type="submit">
+                    Generate conversion score
+                    <span aria-hidden="true">→</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <aside class="insight-column">
+              {% if prediction is not none %}
+                <section class="result-card {% if prediction %}result-positive{% else %}result-negative{% endif %}" id="result" aria-live="polite">
+                  <div class="result-topline">
+                    <span class="result-label">SESSION SCORE</span>
+                    <span class="result-check" aria-hidden="true">✓</span>
+                  </div>
+                  <p class="result-kicker">Conversion likelihood</p>
+                  <div class="result-percentage">{{ (probability * 100) | round(1) }}<span>%</span></div>
+                  <div
+                    class="score-track"
+                    role="progressbar"
+                    aria-label="Conversion likelihood"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="{{ (probability * 100) | round(1) }}"
+                  >
+                    <span style="width: {{ (probability * 100) | round(1) }}%"></span>
+                    <i style="left: {{ (threshold * 100) | round(1) }}%" title="Model threshold"></i>
+                  </div>
+                  <div class="score-scale">
+                    <span>0%</span>
+                    <span>Threshold {{ (threshold * 100) | round(0) | int }}%</span>
+                    <span>100%</span>
+                  </div>
+                  <div class="result-divider"></div>
+                  <div class="decision-row">
+                    <div>
+                      <span class="decision-caption">MODEL ASSESSMENT</span>
+                      <strong>
+                        {% if prediction %}Likely to convert{% else %}Unlikely to convert{% endif %}
+                      </strong>
+                    </div>
+                    <span class="decision-pill">
+                      {% if prediction %}Above threshold{% else %}Below threshold{% endif %}
+                    </span>
+                  </div>
+                  <p class="result-footnote">
+                    {% if prediction %}
+                      This session scored at or above the model’s conversion threshold.
+                    {% else %}
+                      This session scored below the model’s conversion threshold.
+                    {% endif %}
+                  </p>
+                </section>
+              {% else %}
+                <section class="empty-result" id="result">
+                  <div class="empty-illustration" aria-hidden="true">
+                    <span class="illustration-ring ring-one"></span>
+                    <span class="illustration-ring ring-two"></span>
+                    <span class="illustration-core">↗</span>
+                  </div>
+                  <p class="eyebrow">YOUR NEXT INSIGHT</p>
+                  <h2>Your score will appear here.</h2>
+                  <p>
+                    Complete the session details and generate a score to see the
+                    predicted conversion likelihood.
+                  </p>
+                  <div class="empty-divider"></div>
+                  <div class="empty-meta">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    Ready when you are
+                  </div>
+                </section>
+              {% endif %}
+
+              <section class="model-card" id="model-details">
+                <div class="model-card-icon" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
+                <div class="model-card-copy">
+                  <p class="eyebrow">ABOUT THE MODEL</p>
+                  <h3>Built for session signals</h3>
+                  <p>
+                    Uses {{ features | length }} visitor and session signals.
+                    Predictions above {{ (threshold * 100) | round(0) | int }}%
+                    are marked likely to convert.
+                  </p>
+                </div>
+                <span class="model-version">RF</span>
+              </section>
+
+              <p class="disclaimer">
+                Scores are estimates from the trained model and should support—not
+                replace—your team’s judgment.
+              </p>
+            </aside>
+          </section>
+
+          <footer class="page-footer">
+            <span>Northstar <span class="footer-dot">·</span> Conversion intelligence</span>
+            <span>Sales workspace</span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
