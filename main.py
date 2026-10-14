@@ -71,7 +71,7 @@ def build_prediction_payload(form_data: dict):
     return values, prediction, float(probability)
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
     context = {
         "title": "Sales Conversion Dashboard",
